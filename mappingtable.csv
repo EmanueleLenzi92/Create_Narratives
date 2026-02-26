@@ -1,0 +1,53 @@
+﻿label_in_db,label_in_story_map,prefix,suffix,is_title,is_geospatial,is_descriptive
+Descriptor of the value chain,Start,,Value Chain,true,false,false
+Member State,Start,The MOVING reference member state of this VC is ,,false,true,true
+Card ID,Start,The reference MOVING Card ID of this VC is,,false,false,false
+Synthetic description of the value chain,Start,,,false,true,true
+Issues of interest to the MOVING project,Interest on this VC,,,false,true,true
+Reasons for selection,Interest on this VC,,,false,true,true
+Reference mountain chain,Mountain landscape and reference chains,The reference mountain chain of this VC is ,,false,true,true
+Reference mountain landscape,Mountain landscape and reference chains,The reference mountain landscape of this VC is ,,false,true,true
+Brief description of the main characteristics of the Mountain Reference Landscape,Mountain landscape and reference chains,,,false,true,true
+Description of the key local asset(s),Key local assets,,,false,true,true
+LAU,Key local assets,About the LAU: ,,false,true,false
+District / Sub-region,Key local assets,The reference district or sub-region is,,false,true,true
+NUTS 3,Key local assets,About the NUTS 3: ,,false,true,true
+NUTS 2,Key local assets,About the NUTS 2: ,,false,true,true
+Challenges of the VC in light of the MOVING project,Challenges,,,false,true,true
+Type of challenges,Challenges,Overall the type of challenge faced by this VC is,,false,false,true
+Type of VC,Challenges,This VC is classified as,,false,false,true
+Brief description of the innovation in the VC,Innovation, ,,false,true,true
+Type of Innovation,Innovation,The type of innovation of this VC is ,,false,false,true
+Innovation linked to:,Innovation,The innovation is related to ,,false,false,true
+Land use systems,Innovation,The land use systems involved are ,,false,false,true
+Local Assets,Innovation,The local assets include ,,false,true,true
+Size of the area (km2),Geography and population,The size of the area (km2) is,,false,false,false
+Min Altimetry of LAU,Geography and population,The minimum altimetry of the LAU is ,,false,false,false
+Max Altimetry of LAU,Geography and population,The maximum altimetry of the LAU is ,,false,false,false
+Total population (in thousand),Geography and population,The total population (in thousand) is ,,false,false,false
+Population density (Inhabitants/km2) LAU,Geography and population,The population density (Inhabitants/km2) in the LAU is ,,false,false,false
+Population change rate of LAU in the last 10 years (%),Geography and population,The population change rate of the LAU in the last 10 years (%) has been ,,false,false,false
+Regional population density (Inhabitants/km2),Geography and population,The overall regional population density (Inhabitants/km2) is ,,false,false,false
+Regional population change rate in the last 10 years (%),Geography and population,The regional population change rate in the last 10 years (%) has been ,,false,false,false
+Average per capita income (EUR)/year NUTS3,Income and gross value added,The average per capita income (EUR/year) [NUTS3] is ,,false,false,false
+Total bed places (BPs) in tourist accommodations/year LAU,Tourism,The total number of bed places (BPs) in tourist accommodations/year in the LAU is ,,false,false,false
+Regional (NUTS2) share of total BPs/year,Tourism,The regional (NUTS2) share of total BPs/year is ,,false,false,false
+Number of agricultural holdings LAU,Tourism,The number of agricultural holdings in the LAU is ,,false,false,false
+Nearest settlement with population   100000 (km),Tourism,The nearest settlement with population over 100000 (km) is ,,false,false,false
+Precence of Protected Areas,Tourism,In this region protected areas , present,false,false,false
+Primary sector share of total employment/year NUTS3,Employment,The primary sector share of total employment/year [NUTS3] is ,,false,false,false
+Secondary sector share of total employment/year NUTS3,Employment,The secondary sector share of total employment/year [NUTS3] is ,,false,false,false
+Tertiary sector share of total employment/year NUTS3,Employment,The tertiary sector share of total employment/year [NUTS3] is ,,false,false,false
+Primary sector share of total employment/year NUTS2,Employment,The primary sector share of total employment/year [NUTS2] is ,,false,false,false
+Secondary sector share of total employment/year NUTS2,Employment,The secondary sector share of total employment/year [NUTS2] is ,,false,false,false
+Tertiary sector share of total employment/year NUTS2,Employment,The tertiary sector share of total employment/year [NUTS2] is ,,false,false,false
+Total Gross Value Added (GVA) (EUR million)/year NUTS3,Income and gross value added,The total Gross Value Added (GVA) (EUR million/year) [NUTS3] is ,,false,false,false
+Primary sector share of total GVA/year NUTS3,Income and gross value added,The primary sector share of total GVA/year [NUTS3] is ,,false,false,false
+Secondary sector share of total GVA/year NUTS3,Income and gross value added,The secondary sector share of total GVA/year [NUTS3] is ,,false,false,false
+Tertiary sector share of total GVA/year NUTS3,Income and gross value added,The tertiary sector share of total GVA/year [NUTS3] is ,,false,false,false
+Per capita income (EUR)/year NUTS2,Income and gross value added,The per capita income (EUR/year) [NUTS2] is ,,false,false,false
+Total Gross Value Added (GVA) (EUR million)/year NUTS2,Income and gross value added,The total Gross Value Added (GVA) (EUR million/year) [NUTS2] is ,,false,false,false
+Primary sector share of total GVA/year NUTS2,Income and gross value added,The primary sector share of total GVA/year [NUTS2] is ,,false,false,false
+Secondary sector share of total GVA/year NUTS2,Income and gross value added,The secondary sector share of total GVA/year [NUTS2] is ,,false,false,false
+Tertiary sector share of total GVA/year NUTS2,Income and gross value added,The tertiary sector share of total GVA/year [NUTS2] is,,false,false,false
+other information that may be considered of interest for the project,Concluding remarks,,,false,true,true
