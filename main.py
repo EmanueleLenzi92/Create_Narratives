@@ -2,11 +2,17 @@ import csv
 import os
 import re
 import difflib
+import random
+import requests
+from bs4 import BeautifulSoup
 
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.llms import Ollama
 
+# -------------------------
+# CONFIG
+# -------------------------
 MAPPING_CSV = "mappingtable.csv"
 OUTPUT_DIR = "stories"
 
@@ -14,11 +20,43 @@ SKIP_EMPTY_FIELDS = True
 FUZZY_THRESHOLD = 0.90
 PRINT_FUZZY_MATCHES = False
 
+HEADERS = {"User-Agent": "Mozilla/5.0"}
 
+REGION_PAGES = [
+    "https://www.moving-h2020.eu/reference_regions/austrian-alps-austria/",
+    "https://www.moving-h2020.eu/reference_regions/stara-planina-bulgaria/",
+    "https://www.moving-h2020.eu/reference_regions/sumava-cesky-les-czechia/",
+    "https://www.moving-h2020.eu/reference_regions/corsica-france/",
+    "https://www.moving-h2020.eu/reference_regions/drome-valley-france/",
+    "https://www.moving-h2020.eu/reference_regions/crete-greece/",
+    "https://www.moving-h2020.eu/reference_regions/transdanubian-mountains-hungary/",
+    "https://www.moving-h2020.eu/reference_regions/central-apennines-italy/",
+    "https://www.moving-h2020.eu/reference_regions/eastern-alps-italy/",
+    "https://www.moving-h2020.eu/reference_regions/northern-apennines-italy/",
+    "https://www.moving-h2020.eu/reference_regions/maleshevski-mountains-north-macedonia/",
+    "https://www.moving-h2020.eu/reference_regions/cordilheira-central-portugal/",
+    "https://www.moving-h2020.eu/reference_regions/macico-noroeste-portugal/",
+    "https://www.moving-h2020.eu/reference_regions/southern-romanian-carpathian-mountains-romania/",
+    "https://www.moving-h2020.eu/reference_regions/dinaric-mountains-serbia/",
+    "https://www.moving-h2020.eu/reference_regions/slovak-carpathian-mountains-slovakia/",
+    "https://www.moving-h2020.eu/reference_regions/betic-systems-spain/",
+    "https://www.moving-h2020.eu/reference_regions/sierra-morena-spain/",
+    "https://www.moving-h2020.eu/reference_regions/spanish-pyrenees-spain/",
+    "https://www.moving-h2020.eu/reference_regions/swiss-alps-switzerland/",
+    "https://www.moving-h2020.eu/reference_regions/swiss-jura-switzerland/",
+    "https://www.moving-h2020.eu/reference_regions/beydaglari-turkey/",
+    "https://www.moving-h2020.eu/reference_regions/highlands-and-islands-uk-scotland/",
+]
+
+COUNTRY_IMAGE_CACHE = {}
+
+# -------------------------
+# UTILS (shared)
+# -------------------------
 def norm_key(s: str) -> str:
     if s is None:
         return ""
-    x = s.replace("\ufeff", "").replace("\u00a0", " ")
+    x = str(s).replace("\ufeff", "").replace("\u00a0", " ")
     x = x.strip().lower()
     x = re.sub(r"\bnuts\s*([23])\b", r"nuts\1", x)
     x = re.sub(r"[(),]", " ", x)
@@ -41,7 +79,7 @@ def norm_key_aggressive(s: str) -> str:
 def clean_text(s: str) -> str:
     if s is None:
         return ""
-    x = s.replace('"', "'")
+    x = str(s).replace('"', "'")
     x = x.replace("\ufeff", "").replace("\u00a0", " ")
     x = x.strip()
     x = re.sub(r"\s+", " ", x)
@@ -80,6 +118,15 @@ def csv_cell(s: str) -> str:
     return f'"{x}"'
 
 
+def is_quantitative_event(label: str) -> bool:
+    keywords = ["income", "gross value", "employment", "gva", "population", "density"]
+    label = (label or "").lower()
+    return any(k in label for k in keywords)
+
+
+# -------------------------
+# MAPPING (CSV pipeline)
+# -------------------------
 def load_mapping(mapping_path: str):
     mapping_rows = []
     mapping_by_dbkey = {}
@@ -150,7 +197,6 @@ def build_header_resolution(headers_raw, mapping_rows, mapping_by_dbkey):
         best_aggr = best[0]
         idx = mapping_aggr_keys.index(best_aggr)
         db_label_raw, db_key, db_key_aggr, event_label, prefix, suffix, is_title = mapping_rows[idx]
-
         resolved[h_key] = (event_label, prefix, suffix, is_title)
 
         if PRINT_FUZZY_MATCHES:
@@ -160,16 +206,107 @@ def build_header_resolution(headers_raw, mapping_rows, mapping_by_dbkey):
     return resolved
 
 
-def serialize_story(events: dict, event_order: list) -> str:
-    lines = ["title,description"]
+# -------------------------
+# IMAGES (only for CSV pipeline)
+# -------------------------
+def best_region_page(country_name: str) -> str:
+    country_norm = norm_key(country_name)
+    best_url = REGION_PAGES[0]
+    best_score = -1.0
+
+    for url in REGION_PAGES:
+        slug = url.strip("/").split("/")[-1]
+        slug_norm = norm_key(slug)
+
+        score = difflib.SequenceMatcher(None, country_norm, slug_norm).ratio()
+        if score > best_score:
+            best_score = score
+            best_url = url
+
+    print(f"[MATCH] {country_name} -> {best_url} (score={best_score:.2f})")
+    return best_url
+
+
+def extract_images_from_region(url: str):
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=25)
+        r.raise_for_status()
+        soup = BeautifulSoup(r.text, "html.parser")
+        imgs = soup.find_all("img")
+
+        out = []
+        for img in imgs:
+            src = img.get("src")
+            if not src or not src.startswith("http"):
+                continue
+            low = src.lower()
+            if any(x in low for x in ["logo", "icon", "flag"]):
+                continue
+            out.append(src)
+
+        # dedup preserving order
+        seen = set()
+        uniq = []
+        for u in out:
+            if u not in seen:
+                uniq.append(u)
+                seen.add(u)
+        return uniq
+
+    except Exception as e:
+        print("Image extraction error:", e)
+        return []
+
+
+def get_images_for_country(country: str):
+    key = norm_key(country)
+    if key in COUNTRY_IMAGE_CACHE:
+        return COUNTRY_IMAGE_CACHE[key]
+
+    page = best_region_page(country)
+    images = extract_images_from_region(page)
+
+    print(f"[{country}] -> {len(images)} images found")
+    COUNTRY_IMAGE_CACHE[key] = images
+    return images
+
+
+# -------------------------
+# SERIALIZE
+# -------------------------
+def serialize_story_csv(events: dict, event_order: list, country: str) -> str:
+    lines = ["title,description,image"]
+
+    images = list(get_images_for_country(country))
+    random.shuffle(images)
+    img_idx = 0
+
     for event_label in event_order:
         data = events[event_label]
         title = clean_text(data.get("title", "")) or event_label
         desc = " ".join([clean_text(x) for x in data.get("desc", []) if clean_text(x)]).strip()
-        lines.append(f"{csv_cell(title)},{csv_cell(desc)}")
+
+        image_url = ""
+        if desc and not is_quantitative_event(event_label) and img_idx < len(images):
+            image_url = images[img_idx]
+            img_idx += 1
+
+        lines.append(f"{csv_cell(title)},{csv_cell(desc)},{csv_cell(image_url)}")
+
     return "\n".join(lines) + "\n"
 
 
+def serialize_story_txt(paragraphs: list[str]) -> str:
+    lines = ["title,description"]
+    for i, paragraph in enumerate(paragraphs, start=1):
+        title = f"event-{i}"
+        lines.append(f"{csv_cell(title)},{csv_cell(paragraph)}")
+    return "\n".join(lines) + "\n"
+
+
+# -------------------------
+# PROCESSORS
+# -------------------------
 def process_csv(dataset_csv_path: str, mapping_csv_path: str = MAPPING_CSV, output_dir: str = OUTPUT_DIR):
     mapping_rows, mapping_by_dbkey, event_order = load_mapping(mapping_csv_path)
     os.makedirs(output_dir, exist_ok=True)
@@ -191,6 +328,10 @@ def process_csv(dataset_csv_path: str, mapping_csv_path: str = MAPPING_CSV, outp
 
     for row_index in range(1, len(all_rows)):
         row = all_rows[row_index]
+
+        
+        country = clean_text(row[0]) if row else ""
+
         events = {ev: {"title": "", "desc": []} for ev in event_order}
 
         ncols = min(len(headers_keys), len(row))
@@ -218,12 +359,23 @@ def process_csv(dataset_csv_path: str, mapping_csv_path: str = MAPPING_CSV, outp
             else:
                 events[event_label]["desc"].append(sentence)
 
-        story_csv = serialize_story(events, event_order)
+        story_csv = serialize_story_csv(events, event_order, country)
         out_path = os.path.join(output_dir, f"{row_index}.csv")
         with open(out_path, "w", encoding="utf-8", newline="") as out:
             out.write(story_csv)
 
         print(f"Story {row_index} saved -> {out_path}")
+
+
+def useLLM(narrative: str) -> str:
+    llm = Ollama(
+        model="gemma2:9b-instruct-q8_0",
+        system="Divide the provided text into paragraphs without deleting, adding or changing words.",
+        num_ctx=4096,
+        temperature=0.01,
+        callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
+    )
+    return llm(narrative)
 
 
 def process_txt(txt_path: str, output_dir: str = OUTPUT_DIR):
@@ -232,22 +384,11 @@ def process_txt(txt_path: str, output_dir: str = OUTPUT_DIR):
     with open(txt_path, "r", encoding="utf-8", errors="replace") as f:
         text = f.read()
 
-    # Output LLM (testo suddiviso in paragrafi)
     llm_output = useLLM(text)
 
-    # Split sui paragrafi (uno o più a capo consecutivi)
     paragraphs = [p.strip() for p in re.split(r"\n\s*\n", llm_output) if p.strip()]
+    story_csv = serialize_story_txt(paragraphs)
 
-    # Costruzione CSV
-    lines = ["title,description"]
-
-    for i, paragraph in enumerate(paragraphs, start=1):
-        title = f"event-{i}"
-        lines.append(f"{csv_cell(title)},{csv_cell(paragraph)}")
-
-    story_csv = "\n".join(lines) + "\n"
-
-    # Nome file output
     base_name = os.path.splitext(os.path.basename(txt_path))[0]
     out_path = os.path.join(output_dir, f"{base_name}.csv")
 
@@ -255,33 +396,21 @@ def process_txt(txt_path: str, output_dir: str = OUTPUT_DIR):
         out.write(story_csv)
 
     print(f"CSV creato da TXT -> {out_path}")
-    
-def useLLM(narrative: str):
-    
-    llm = Ollama(
-        model="gemma2:9b-instruct-q8_0", 
-        system="Divide the provided text into paragraphs without deleting, adding or changing words.", 
-        num_ctx=4096, 
-        temperature=0.01, 
-        callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
-    )
-    
-    events = llm(narrative)
-    
-    return events
 
 
+# -------------------------
+# ENTRYPOINT
+# -------------------------
 def run(input_path: str):
     """
     input_path è SEMPRE una stringa (percorso file).
-    Se finisce con .csv -> genera storie.
-    Se finisce con .txt -> stampa contenuto.
+    Se finisce con .csv -> genera stories con colonna image.
+    Se finisce con .txt -> usa Ollama e genera CSV title/description.
     """
     if not isinstance(input_path, str) or not input_path.strip():
         raise ValueError("input_path must be a non-empty string")
 
     path = input_path.strip()
-
     if not os.path.isfile(path):
         raise FileNotFoundError(f"File not found: {path}")
 
@@ -289,12 +418,12 @@ def run(input_path: str):
     if lower.endswith(".csv"):
         process_csv(path, mapping_csv_path=MAPPING_CSV, output_dir=OUTPUT_DIR)
     elif lower.endswith(".txt"):
-        process_txt(path)
+        process_txt(path, output_dir=OUTPUT_DIR)
     else:
         raise ValueError("Input path must end with .csv or .txt")
 
 
-# Example:
+# Examples:
 # run("MOVING_VCs_DATASET_FINAL_V2.csv")
 # run("input.txt")
 
