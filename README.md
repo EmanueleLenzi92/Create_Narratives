@@ -1,10 +1,10 @@
-# Module 1 – Narrative Extraction Engine
+# Algorithm for Narrative Creation
 
-This repository contains the first module of an automated workflow designed to build a Knowledge Graph of 454 narratives on mountain value chains developed within the MOVING project.
+This repository contains the code for the first module of an automatic workflow designed to build a Knowledge Graph of 454 narratives on mountain value chains developed within the MOVING (https://www.moving-h2020.eu/) project.
 
 ## Purpose
 
-This module transforms raw textual data into structured narratives divided into events.  
+This module transforms textual data (stored in a CSV file or in raw txt files) into structured narratives divided into events.  
 The output is used as the foundation for the next stages of Knowledge Graph construction.
 
 ## Input
@@ -16,7 +16,7 @@ The algorithm accepts:
    A `mappingtable.csv` file defines how dataset columns are converted into narrative events.
 
 2. **TXT file**  
-   A plain-text narrative that is automatically divided into paragraphs using a local LLM (Ollama).
+   A plain-text narrative that is automatically divided into paragraphs using a local LLM (using Ollama (https://ollama.com/)).
 
 ## Output
 
