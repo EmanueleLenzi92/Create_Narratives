@@ -3,9 +3,9 @@ import os
 import re
 import difflib
 
-# from langchain.callbacks.manager import CallbackManager
-# from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-# from langchain.llms import Ollama
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.llms import Ollama
 
 MAPPING_CSV = "mappingtable.csv"
 OUTPUT_DIR = "stories"
@@ -226,22 +226,49 @@ def process_csv(dataset_csv_path: str, mapping_csv_path: str = MAPPING_CSV, outp
         print(f"Story {row_index} saved -> {out_path}")
 
 
-def process_txt(txt_path: str):
+def process_txt(txt_path: str, output_dir: str = OUTPUT_DIR):
+    os.makedirs(output_dir, exist_ok=True)
+
     with open(txt_path, "r", encoding="utf-8", errors="replace") as f:
         text = f.read()
-    print(text)
+
+    # Output LLM (testo suddiviso in paragrafi)
+    llm_output = useLLM(text)
+
+    # Split sui paragrafi (uno o più a capo consecutivi)
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", llm_output) if p.strip()]
+
+    # Costruzione CSV
+    lines = ["title,description"]
+
+    for i, paragraph in enumerate(paragraphs, start=1):
+        title = f"event-{i}"
+        lines.append(f"{csv_cell(title)},{csv_cell(paragraph)}")
+
+    story_csv = "\n".join(lines) + "\n"
+
+    # Nome file output
+    base_name = os.path.splitext(os.path.basename(txt_path))[0]
+    out_path = os.path.join(output_dir, f"{base_name}.csv")
+
+    with open(out_path, "w", encoding="utf-8", newline="") as out:
+        out.write(story_csv)
+
+    print(f"CSV creato da TXT -> {out_path}")
     
 def useLLM(narrative: str):
     
     llm = Ollama(
         model="gemma2:9b-instruct-q8_0", 
-        system="", 
+        system="Divide the provided text into paragraphs without deleting, adding or changing words.", 
         num_ctx=4096, 
         temperature=0.01, 
         callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
     )
     
     events = llm(narrative)
+    
+    return events
 
 
 def run(input_path: str):
@@ -267,8 +294,8 @@ def run(input_path: str):
         raise ValueError("Input path must end with .csv or .txt")
 
 
-# Esempio d'uso:
+# Example:
 # run("MOVING_VCs_DATASET_FINAL_V2.csv")
 # run("input.txt")
 
-run("a.txt")
+run("MOVING_VCs_DATASET_FINAL_V2.csv")
