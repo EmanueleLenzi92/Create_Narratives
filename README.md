@@ -16,7 +16,7 @@ The algorithm accepts:
    A `mappingtable.csv` file defines how dataset columns are converted into narrative events.
 
 2. **TXT file**  
-   A plain-text narrative that is automatically divided into paragraphs using a local LLM (using Ollama (https://ollama.com/)).
+   A plain-text narrative that is automatically divided into paragraphs using a local LLM (using Ollama (https://ollama.com/). Ollama is required).
 
 ## Output
 
