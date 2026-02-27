@@ -1,4 +1,4 @@
-# Algorithm for Narrative Creation
+# Data Pre-processing Module - Algorithm for Narrative Creation
 
 This repository contains the code for the first module of an automatic workflow designed to build a Knowledge Graph of 454 narratives on mountain value chains developed within the MOVING (https://www.moving-h2020.eu/) project.
 
