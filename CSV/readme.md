@@ -1,6 +1,5 @@
-===============================================================
-        The MOVING CSV file
-===============================================================
+### The MOVING CSV file
+
 
 This folder contains the CSV Excel file provided by the MOuntain Valorisation through INterconnectedness and Green growth (MOVING) (https://www.moving-h2020.eu/) Horizon 2020 European project. In this CSV file, MOVING collected data regarding 454 value chains of 16 european Country.
 
