@@ -31,7 +31,7 @@ Data associated with the columns can be categorized into three main types:
 
 
 
-= Dictionary of the CSV Columns
+### Dictionary of the CSV Columns
 
 
 In the following, we report an explanation of the values for each column of the CSV file. The reported values are all in textual format.
