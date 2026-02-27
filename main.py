@@ -424,7 +424,8 @@ def run(input_path: str):
 
 
 # Examples:
-# run("MOVING_VCs_DATASET_FINAL_V2.csv")
+# run("CSV/MOVING_VCs_DATASET_FINAL_V2.csv")
 # run("input.txt")
 
-run("MOVING_VCs_DATASET_FINAL_V2.csv")
+
+run("CSV/MOVING_VCs_DATASET_FINAL_V2.csv")
